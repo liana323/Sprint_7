@@ -2,6 +2,7 @@ import pytest
 import requests
 import allure
 from locators import ORDER_URL
+from data import EXPECTED_RESPONSES, ERROR_MESSAGES
 
 
 @pytest.mark.parametrize("colors", [
@@ -9,23 +10,19 @@ from locators import ORDER_URL
     (["BLACK", "GREY"]),  # Два цвета
     ([])  # Без цвета
 ])
+@allure.feature('Создание курьера')
+class TestCreationOrder:
+    @allure.title('Создание заказа')
+    def test_create_order_with_colors(self,create_order_data, colors):
 
-@allure.feature('Создание заказа')
-def test_create_order_with_colors(create_order_data, colors):
+        with allure.step("Генерация данных заказа"):
+            order_data = create_order_data(colors)
 
-    with allure.step("Генерация данных заказа"):
-        order_data = create_order_data(colors)
+        with allure.step("Отправка запроса на создание заказа"):
+            response = requests.post(ORDER_URL, json=order_data)
 
-    with allure.step("Отправка запроса на создание заказа"):
-        response = requests.post(ORDER_URL, json=order_data)
 
-    # Логирование ответа от API
-    print(f"Ответ от API: {response.text}")
-
-    with allure.step("Проверка успешного создания заказа"):
-        assert response.status_code == 201, f"Ожидался код 201, но получен {response.status_code}"
-        assert "track" in response.json(), "Ответ не содержит track"
-
-    with allure.step("Логирование track для отладки"):
-        track = response.json().get('track')
-        print(f"Создан заказ с track: {track}")
+        with allure.step("Проверка успешного создания заказа"):
+            assert response.status_code == EXPECTED_RESPONSES['success'], \
+                f"Ожидался код {EXPECTED_RESPONSES['success']}, но получен {response.status_code}"
+            assert "track" in response.json(), ERROR_MESSAGES['no_track']

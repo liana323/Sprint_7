@@ -2,14 +2,9 @@ import pytest
 import requests
 import random
 import string
-
+from helpers import generate_random_string, get_courier_id_service, delete_courier_service # Импорт функции из helpers.py
 from locators import COURIER_LOGIN_URL, COURIER_DELETE_URL, COURIER_CREATE_URL
-
-
-# Функция для генерации случайной строки
-def generate_random_string(length):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(length))
+from data import COURIER_DATA
 
 # Фикстура для создания нового курьера
 @pytest.fixture
@@ -48,52 +43,22 @@ def register_new_courier_and_return_login_password():
         "firstName": first_name
     }
 
-
 # Функция для логина курьера и получения его ID
 @pytest.fixture
 def get_courier_id():
-    def _get_courier_id(login, password):
-        payload = {
-            "login": login,
-            "password": password
-        }
-        response = requests.post(COURIER_LOGIN_URL, json=payload)
-        if response.status_code == 200:
-            courier_id = response.json().get('id')
-            if courier_id:
-                return courier_id
-            else:
-                raise Exception(f"ID курьера не найдено в ответе: {response.text}")
-        else:
-            raise Exception(f"Ошибка при логине: {response.status_code}, {response.text}")
-    return _get_courier_id
+    # Оборачиваем вызов функции из helpers.py
+    return get_courier_id_service
 
 # Функция для удаления курьера по ID
 @pytest.fixture
 def delete_courier_by_id():
-    def _delete_courier_by_id(courier_id):
-        delete_url = f"{COURIER_DELETE_URL}/{courier_id}"
-        response = requests.delete(delete_url)
-        if response.status_code == 200 and response.json().get("ok"):
-            print(f"Курьер с ID {courier_id} был успешно удален.")
-        else:
-            raise Exception(f"Ошибка при удалении курьера: {response.status_code}, {response.text}")
-    return _delete_courier_by_id
+    # Оборачиваем вызов функции из helpers.py
+    return delete_courier_service
 
 # Фикстура для создания данных заказа
 @pytest.fixture
 def create_order_data():
     def _create_order_data(colors):
-        order_data = {
-            "firstName": "Naruto",
-            "lastName": "Uchiha",
-            "address": "Konoha, 142 apt.",
-            "metroStation": "4",
-            "phone": "+7 800 355 35 35",
-            "rentTime": 5,
-            "deliveryDate": "2020-06-06",
-            "comment": "Saske, come back to Konoha",
-            "color": colors  # Цвета
-        }
+        order_data = order_data = COURIER_DATA.copy()
         return order_data
     return _create_order_data
