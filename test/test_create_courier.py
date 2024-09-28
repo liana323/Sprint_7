@@ -1,14 +1,17 @@
+#test_create_courier.py
+
 import requests
 import allure
-from locators import COURIER_CREATE_URL
+from urls import COURIER_CREATE_URL
 from data import EXPECTED_RESPONSES, ERROR_MESSAGES, COURIER_DATA
+from services import get_courier_id_service, delete_courier_service  # Используем методы из services.py напрямую
 
 
 @allure.feature('Создание курьера')
 class TestCourierCreation:
 
     @allure.title('Создание нового курьера')
-    def test_create_courier(self, register_new_courier_and_return_login_password, get_courier_id, delete_courier_by_id):
+    def test_create_courier(self, register_new_courier_and_return_login_password):
         # Получаем данные нового курьера из фикстуры
         courier = register_new_courier_and_return_login_password
 
@@ -20,10 +23,10 @@ class TestCourierCreation:
             })
 
             with allure.step("Получаем ID курьера через логин"):
-                courier_id = get_courier_id(courier['login'], courier['password'])
+                courier_id = get_courier_id_service(courier['login'], courier['password'])
 
             with allure.step("Удаляем курьера по ID"):
-                delete_courier_by_id(courier_id)
+                delete_courier_service(courier_id)
 
             with allure.step("Повторяем создание курьера после удаления"):
                 response = requests.post(COURIER_CREATE_URL, data={
@@ -39,29 +42,25 @@ class TestCourierCreation:
                                                               actual=response.status_code)
             assert response.json()["ok"] is True, "Ответ не содержит 'ok': true"
     @allure.title('Создание курьера без обязательного поля')
-    def test_create_courier_without_field(self, register_new_courier_and_return_login_password, get_courier_id, delete_courier_by_id):
+    def test_create_courier_without_field(self, register_new_courier_and_return_login_password):
         # Используем данные нового курьера из фикстуры
         courier = register_new_courier_and_return_login_password
 
         with allure.step("Попытка создать курьера без обязательного поля"):
             response = requests.post(COURIER_CREATE_URL, data={
-                "login": courier['login']
+                "login": courier['login'],
             })
 
-
             # Получаем ID курьера через логин и пароль
-            courier_id = get_courier_id(courier['login'], courier['password'])
+            courier_id = get_courier_id_service(courier['login'], courier['password'])
 
-            # Удаляем курьера по ID
-            delete_courier_by_id(courier_id)
 
         with allure.step("Проверка, что статус код 400, так как отсутствует обязательное поле"):
             assert response.status_code == EXPECTED_RESPONSES['bad_request'], \
-                ERROR_MESSAGES["expected_status_code"].format(expected=EXPECTED_RESPONSES['bad_request'],
-                                                              actual=response.status_code)
+                ERROR_MESSAGES["expected_status_code"].format(expected=EXPECTED_RESPONSES['bad_request'],actual=response.status_code)
 
     @allure.title('Создание двух одинаковых курьеров')
-    def test_create_duplicate_courier(self, register_new_courier_and_return_login_password, get_courier_id, delete_courier_by_id):
+    def test_create_duplicate_courier(self, register_new_courier_and_return_login_password):
         with allure.step("Получаем данные нового курьера с помощью фикстуры"):
             courier = register_new_courier_and_return_login_password
 
@@ -74,10 +73,10 @@ class TestCourierCreation:
 
 
             with allure.step("Получаем ID курьера через логин"):
-                courier_id = get_courier_id(courier['login'], courier['password'])
+                courier_id = get_courier_id_service(courier['login'], courier['password'])
 
             with allure.step("Удаляем курьера по ID"):
-                delete_courier_by_id(courier_id)
+                delete_courier_service(courier_id)
 
             with allure.step("Повторяем создание курьера после удаления"):
                 response = requests.post(COURIER_CREATE_URL, data={

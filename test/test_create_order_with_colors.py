@@ -1,7 +1,7 @@
 import pytest
 import requests
 import allure
-from locators import ORDER_URL
+from urls import ORDER_URL
 from data import EXPECTED_RESPONSES, ERROR_MESSAGES
 
 
